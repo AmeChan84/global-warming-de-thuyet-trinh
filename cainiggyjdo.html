@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b26">
+  <title>Climate Quest — The Classroom Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f5f3e9;
+      --muted: #b4c4bb;
+      --forest: #102b26;
+      --panel: #193a32;
+      --panel-light: #21483d;
+      --lime: #d8f36a;
+      --orange: #ffad72;
+      --line: rgb(245 243 233 / 14%);
+      --correct: #b9ef8b;
+      --wrong: #ff937f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 8% 8%, rgb(216 243 106 / 8%), transparent 30rem),
+        radial-gradient(ellipse at 95% 90%, rgb(255 173 114 / 8%), transparent 27rem),
+        var(--forest);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .shell {
+      width: min(1060px, calc(100% - 40px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 26px 0 38px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 34px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--lime);
+      color: var(--forest);
+      font-size: 20px;
+    }
+
+    .classroom-label {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    main { flex: 1; }
+    .screen { display: none; }
+    .screen.active { display: block; animation: rise .35s ease both; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(270px, .85fr);
+      align-items: center;
+      gap: clamp(28px, 7vw, 82px);
+      padding: 28px 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 15px;
+      color: var(--lime);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, p { margin-top: 0; }
+    h1 {
+      max-width: 620px;
+      margin-bottom: 19px;
+      font-size: clamp(48px, 8vw, 88px);
+      line-height: .97;
+      letter-spacing: -.065em;
+    }
+
+    h1 span { color: var(--lime); }
+    .lede {
+      max-width: 540px;
+      margin-bottom: 27px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .feature-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .feature {
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: #d7e0d9;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .setup-card, .question-card, .final-card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgb(33 72 61 / 90%), rgb(25 58 50 / 88%));
+      box-shadow: 0 24px 70px rgb(0 0 0 / 19%);
+    }
+
+    .setup-card { padding: 26px; }
+    .setup-card h2 { margin-bottom: 5px; font-size: 21px; }
+    .setup-help { margin-bottom: 23px; color: var(--muted); font-size: 13px; }
+
+    .team-count-label, .team-field label {
+      display: block;
+      margin-bottom: 9px;
+      color: #dce5dc;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .count-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .count-button, .answer-button, .secondary-button {
+      border: 1px solid var(--line);
+      background: rgb(16 43 38 / 48%);
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    .count-button {
+      padding: 10px 8px;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .count-button[aria-pressed="true"] {
+      border-color: var(--lime);
+      background: rgb(216 243 106 / 10%);
+      color: var(--lime);
+    }
+
+    .team-fields { display: grid; gap: 13px; margin-bottom: 21px; }
+    .team-field input {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      background: rgb(16 43 38 / 55%);
+      color: var(--ink);
+    }
+
+    .team-field input:focus { border-color: var(--lime); }
+    .team-field input::placeholder { color: #7f9990; }
+
+    .primary-button {
+      width: 100%;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--lime);
+      color: #1c3020;
+      cursor: pointer;
+      font-weight: 850;
+      transition: transform .16s ease, filter .16s ease;
+    }
+
+    .primary-button:hover { transform: translateY(-2px); filter: brightness(1.04); }
+    button:focus-visible, input:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+
+    .planet {
+      position: relative;
+      display: grid;
+      width: min(100%, 330px);
+      aspect-ratio: 1;
+      margin: 0 auto;
+      place-items: center;
+      border: 1px solid rgb(216 243 106 / 24%);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 32%, rgb(216 243 106 / 22%), transparent 7%),
+        radial-gradient(circle at 65% 65%, rgb(255 173 114 / 16%), transparent 8%),
+        radial-gradient(circle at 50% 48%, #28594a 0%, #1b453a 46%, #14352e 69%, transparent 70%);
+    }
+
+    .planet::before, .planet::after {
+      position: absolute;
+      border: 1px solid rgb(216 243 106 / 20%);
+      border-radius: 50%;
+      content: "";
+      inset: 10%;
+      transform: rotate(-27deg) scaleY(.42);
+    }
+
+    .planet::after { inset: -3%; transform: rotate(22deg) scaleY(.38); border-color: rgb(255 173 114 / 28%); }
+    .planet-symbol { z-index: 1; font-size: clamp(90px, 15vw, 145px); filter: drop-shadow(0 12px 24px rgb(0 0 0 / 25%)); }
+    .orbit-label {
+      position: absolute;
+      z-index: 2;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #193a32;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .04em;
+    }
+
+    .label-one { top: 9%; right: -1%; }
+    .label-two { bottom: 12%; left: -7%; }
+    .label-three { right: -5%; bottom: 21%; }
+
+    .game-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 25px; }
+    .sidebar { display: flex; flex-direction: column; gap: 15px; }
+    .sidebar-card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgb(25 58 50 / 70%);
+    }
+
+    .sidebar-title {
+      margin: 0 0 13px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .score-list { display: grid; gap: 11px; }
+    .score-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+    .score-item.current { color: var(--lime); font-weight: 800; }
+    .score-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .team-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--lime); }
+    .score-item:nth-child(2) .team-dot { background: var(--orange); }
+    .score-item:nth-child(3) .team-dot { background: #91c9ff; }
+    .score-item:nth-child(4) .team-dot { background: #d4a7ff; }
+    .score-name span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .score-value { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    .progress-track { height: 6px; overflow: hidden; border-radius: 9px; background: rgb(245 243 233 / 12%); }
+    .progress-fill { width: 0; height: 100%; border-radius: inherit; background: var(--lime); transition: width .35s ease; }
+    .progress-copy { display: flex; justify-content: space-between; margin-top: 9px; color: var(--muted); font-size: 11px; }
+
+    .question-card { min-height: 540px; padding: clamp(22px, 4vw, 39px); }
+    .question-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 27px; }
+    .category-pill, .turn-pill {
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .turn-pill { border-color: rgb(216 243 106 / 35%); color: var(--lime); }
+    .question-number { margin-bottom: 11px; color: var(--orange); font-size: 11px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+    .question-text { max-width: 690px; margin-bottom: 27px; font-size: clamp(25px, 4vw, 39px); line-height: 1.18; letter-spacing: -.035em; }
+    .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+
+    .answer-button {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 13px;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    .answer-button:hover:not(:disabled) { transform: translateY(-2px); border-color: rgb(216 243 106 / 60%); background: var(--panel-light); }
+    .answer-button:disabled { cursor: default; }
+    .answer-key {
+      display: grid;
+      width: 29px;
+      height: 29px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .answer-button.correct { border-color: var(--correct); background: rgb(185 239 139 / 11%); }
+    .answer-button.correct .answer-key { border-color: var(--correct); color: var(--correct); }
+    .answer-button.incorrect { border-color: var(--wrong); background: rgb(255 147 127 / 10%); }
+    .answer-button.incorrect .answer-key { border-color: var(--wrong); color: var(--wrong); }
+
+    .feedback {
+      display: none;
+      margin-top: 19px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgb(16 43 38 / 48%);
+    }
+
+    .feedback.visible { display: block; animation: rise .25s ease both; }
+    .feedback-heading { margin-bottom: 5px; font-size: 14px; font-weight: 850; }
+    .feedback-heading.correct-text { color: var(--correct); }
+    .feedback-heading.incorrect-text { color: var(--wrong); }
+    .feedback-copy { margin: 0; color: #d0ddd3; font-size: 13px; line-height: 1.6; }
+    .question-actions { display: flex; justify-content: flex-end; margin-top: 17px; }
+    .next-button { width: auto; min-width: 160px; }
+
+    .final-wrap { display: grid; min-height: 65vh; place-items: center; }
+    .final-card { width: min(100%, 620px); padding: clamp(25px, 6vw, 48px); text-align: center; }
+    .trophy { margin-bottom: 14px; font-size: 57px; }
+    .final-card h2 { margin-bottom: 9px; font-size: clamp(34px, 6vw, 52px); letter-spacing: -.05em; }
+    .final-copy { margin-bottom: 28px; color: var(--muted); line-height: 1.6; }
+    .final-scores { display: grid; gap: 9px; margin: 0 auto 25px; text-align: left; }
+    .final-score-row { display: flex; justify-content: space-between; gap: 12px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 11px; background: rgb(16 43 38 / 35%); }
+    .final-score-row.winner { border-color: rgb(216 243 106 / 58%); color: var(--lime); }
+
+    .footnote { margin: 25px 0 0; color: #79948a; font-size: 11px; text-align: center; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 30px, 600px); padding-top: 18px; }
+      .topbar { margin-bottom: 14px; }
+      .intro-grid { grid-template-columns: 1fr; gap: 33px; padding-top: 22px; }
+      .planet { width: min(68%, 260px); grid-row: 2; }
+      .setup-card { grid-row: 3; }
+      .game-layout { grid-template-columns: 1fr; gap: 13px; }
+      .sidebar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .sidebar-card { padding: 13px; }
+      .score-list { grid-template-columns: 1fr 1fr; gap: 9px; }
+      .score-item { font-size: 11px; }
+      .question-card { min-height: auto; padding: 22px 17px; }
+      .question-meta { margin-bottom: 23px; }
+      .answers { grid-template-columns: 1fr; gap: 8px; }
+      .answer-button { min-height: 59px; }
+    }
+
+    @media (max-width: 420px) {
+      .classroom-label { font-size: 10px; }
+      .brand { font-size: 12px; }
+      .sidebar { grid-template-columns: 1fr; }
+      .score-list { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span> Climate Quest</div>
+      <div class="classroom-label">The classroom quiz</div>
+    </header>
+
+    <main>
+      <section id="start-screen" class="screen active" aria-labelledby="welcome-heading">
+        <div class="intro-grid">
+          <div>
+            <p class="eyebrow">Think big. Team up. Take action.</p>
+            <h1 id="welcome-heading">The future is <span>in play.</span></h1>
+            <p class="lede">How much do you know about a warming world? Challenge your class, uncover the science, and see which team can become Climate Quest champions.</p>
+            <div class="feature-row" aria-label="Game details">
+              <span class="feature">12 questions</span>
+              <span class="feature">2–4 teams</span>
+              <span class="feature">No time limit</span>
+            </div>
+          </div>
+
+          <div class="planet" aria-hidden="true">
+            <span class="planet-symbol">🌍</span>
+            <span class="orbit-label label-one">THE SCIENCE</span>
+            <span class="orbit-label label-two">OUR PLANET</span>
+            <span class="orbit-label label-three">YOUR MOVE</span>
+          </div>
+
+          <form id="setup-form" class="setup-card">
+            <h2>Build your teams</h2>
+            <p class="setup-help">Teams take turns. Get 100 points for each correct answer.</p>
+            <span class="team-count-label">How many teams?</span>
+            <div class="count-options" role="group" aria-label="Number of teams">
+              <button class="count-button" type="button" data-count="2" aria-pressed="true">2 teams</button>
+              <button class="count-button" type="button" data-count="3" aria-pressed="false">3 teams</button>
+              <button class="count-button" type="button" data-count="4" aria-pressed="false">4 teams</button>
+            </div>
+            <div id="team-fields" class="team-fields"></div>
+            <button class="primary-button" type="submit">Start the challenge <span aria-hidden="true">→</span></button>
+          </form>
+        </div>
+      </section>
+
+      <section id="game-screen" class="screen" aria-label="Quiz game">
+        <div class="game-layout">
+          <aside class="sidebar" aria-label="Game status">
+            <div class="sidebar-card">
+              <p class="sidebar-title">Team scores</p>
+              <div id="score-list" class="score-list" aria-live="polite"></div>
+            </div>
+            <div class="sidebar-card">
+              <p class="sidebar-title">Quest progress</p>
+              <div class="progress-track" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0">
+                <div id="progress-fill" class="progress-fill"></div>
+              </div>
+              <div class="progress-copy"><span id="progress-label">Question 1 of 12</span><span>12 total</span></div>
+            </div>
+          </aside>
+
+          <div class="question-card">
+            <div class="question-meta">
+              <span id="category" class="category-pill"></span>
+              <span id="turn-label" class="turn-pill"></span>
+            </div>
+            <p id="question-number" class="question-number"></p>
+            <h2 id="question-text" class="question-text"></h2>
+            <div id="answers" class="answers" role="group" aria-label="Answer choices"></div>
+            <div id="feedback" class="feedback" role="status" aria-live="polite">
+              <p id="feedback-heading" class="feedback-heading"></p>
+              <p id="feedback-copy" class="feedback-copy"></p>
+            </div>
+            <div class="question-actions">
+              <button id="next-button" class="primary-button next-button" type="button" hidden>Next question <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="final-screen" class="screen" aria-labelledby="final-heading">
+        <div class="final-wrap">
+          <div class="final-card">
+            <div class="trophy" aria-hidden="true">🏆</div>
+            <p class="eyebrow">Quest complete</p>
+            <h2 id="final-heading"></h2>
+            <p id="final-copy" class="final-copy"></p>
+            <div id="final-scores" class="final-scores" aria-label="Final scores"></div>
+            <button id="play-again" class="primary-button" type="button">Play again <span aria-hidden="true">↻</span></button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footnote">Climate Quest · Learn the science. Imagine a better future.</footer>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        category: "Climate attribution",
+        question: "Earth's climate has always varied naturally. What evidence most strongly identifies the recent warming as primarily human-caused?",
+        answers: ["Warming occurs equally at every altitude and location", "The Sun's energy output has steadily risen over recent decades", "Greenhouse fingerprints and stratospheric cooling", "Volcanic CO₂ emissions exceed those from industry"],
+        correct: 2,
+        explanation: "Greenhouse gases warm the lower atmosphere while contributing to cooling in the stratosphere. This observed pattern, along with measured emissions and other evidence, is consistent with human influence and not a sustained increase in solar output."
+      },
+      {
+        category: "The greenhouse effect",
+        question: "Why does adding carbon dioxide warm the climate even though CO₂ is only a small fraction of the atmosphere?",
+        answers: ["CO₂ absorbs outgoing infrared radiation", "It blocks most sunlight before it reaches the surface", "It creates heat by reacting with atmospheric oxygen", "It slows Earth's rotation, lengthening each day"],
+        correct: 0,
+        explanation: "CO₂ absorbs and emits infrared radiation in specific wavelength bands. Increasing its concentration changes how efficiently Earth loses heat to space, shifting the planet's energy balance."
+      },
+      {
+        category: "Energy balance",
+        question: "After greenhouse-gas concentrations rise, why can Earth's surface keep warming for a while even if emissions stopped increasing?",
+        answers: ["The atmosphere stops absorbing infrared radiation", "The ocean releases its stored heat in one season", "Earth's orbit shifts to capture more sunlight", "Ocean heat delays the new energy balance"],
+        correct: 3,
+        explanation: "The oceans have large heat capacity and absorb much of the excess energy. This thermal inertia delays the surface response, so temperature can continue adjusting even after the rate of emissions stops rising."
+      },
+      {
+        category: "Climate feedbacks",
+        question: "Arctic sea ice shrinks, exposing darker ocean water that absorbs more sunlight. What kind of climate process is this?",
+        answers: ["A negative feedback that cools the Arctic", "Positive feedback amplifies warming", "A direct CO₂ emission from melting ice", "A seasonal cycle unrelated to long-term climate"],
+        correct: 1,
+        explanation: "This is the ice-albedo feedback: less reflective ice exposes darker water, which absorbs more solar energy and encourages further warming and ice loss. Positive feedback means amplification, not that the change is beneficial."
+      },
+      {
+        category: "Sea level",
+        question: "Which pair describes the two major contributors to global mean sea-level rise as the climate warms?",
+        answers: ["Heavier rainfall and faster ocean tides", "Ocean expansion and land-ice melt", "Floating sea-ice loss and stronger waves", "Salinity shifts and coastal erosion"],
+        correct: 1,
+        explanation: "Warming causes seawater to expand, and melting glaciers and ice sheets on land add water to the ocean. Floating sea ice already displaces water, so its melting has a much smaller direct effect on sea level."
+      },
+      {
+        category: "Weather & climate",
+        question: "A single severe storm happens. What is the most scientifically careful way to describe its connection to climate change?",
+        answers: ["Climate change alone caused that storm, without natural factors", "One storm proves the climate is changing", "Local weather cannot be linked to global climate", "Climate shifts event odds; attribution tests its role"],
+        correct: 3,
+        explanation: "Weather events have multiple causes. Climate change can make certain types of extremes more likely or intense, but event-attribution research is needed to estimate its influence on a particular event."
+      },
+      {
+        category: "Carbon cycle",
+        question: "Why has the amount of carbon dioxide in the atmosphere increased even though land plants and the ocean absorb CO₂?",
+        answers: ["Sinks absorb less than humans emit", "Plants return all absorbed carbon to the air each night", "The ocean has reached capacity and absorbs no CO₂", "Solar reactions produce most atmospheric CO₂"],
+        correct: 0,
+        explanation: "Land and ocean sinks take up a substantial share of human CO₂ emissions, but not all of them. The portion left over accumulates in the atmosphere, raising its concentration."
+      },
+      {
+        category: "Mitigation & adaptation",
+        question: "A city replaces gas-fired electricity with wind power and redesigns a flood-prone district. Which classification is correct?",
+        answers: ["Both actions reduce greenhouse-gas emissions", "Both actions prepare for climate impacts", "Wind: mitigation; flood redesign: adaptation", "Wind prepares for impacts; redesign cuts emissions"],
+        correct: 2,
+        explanation: "Replacing fossil electricity reduces the cause of climate change, so it is mitigation. Redesigning a flood-prone district prepares for climate impacts, so it is adaptation."
+      },
+      {
+        category: "Methane",
+        question: "Why can reducing methane emissions help limit near-term warming, even though methane remains in the atmosphere for less time than CO₂?",
+        answers: ["It traps less heat than CO₂ and remains in air longer", "It traps more heat near-term, but breaks down faster", "It permanently removes atmospheric CO₂", "It has no continuing climate effect after release"],
+        correct: 1,
+        explanation: "Methane is a potent greenhouse gas over a few decades, though it has a shorter atmospheric lifetime than CO₂. Sustained methane cuts can reduce its concentration and slow near-term warming; CO₂ reductions remain essential for limiting long-term warming."
+      },
+      {
+        category: "Oceans",
+        question: "What is the main chemical reason ocean acidification threatens organisms that build shells or skeletons from calcium carbonate?",
+        answers: ["Lower pH makes more carbonate ions available", "Dissolved CO₂ removes all ocean oxygen", "Fewer carbonate ions make shell-building harder", "Seawater salt turns directly into carbon dioxide molecules"],
+        correct: 2,
+        explanation: "Dissolved CO₂ changes seawater chemistry, lowering pH and reducing the availability of carbonate ions used by many organisms to build calcium-carbonate shells and skeletons."
+      },
+      {
+        category: "Net zero",
+        question: "Which statement best describes the role of carbon dioxide removal in reaching net zero?",
+        answers: ["Balance emissions left after deep cuts", "Allow emissions to rise without any limit", "Instantly restore the pre-industrial climate", "Prepare communities for worsening heatwaves"],
+        correct: 0,
+        explanation: "At net zero, remaining human-caused CO₂ emissions are balanced by removals. Because removal has limits and uncertainties, rapidly reducing emissions is essential rather than relying on removal alone."
+      },
+      {
+        category: "Climate risk",
+        question: "Why does limiting warming from 2°C to 1.5°C still matter if both levels involve climate impacts?",
+        answers: ["At 1.5°C, all climate impacts stop", "Each half degree has identical impacts everywhere", "Less warming removes the need to adapt", "Less warming lowers risks, but not to zero"],
+        correct: 3,
+        explanation: "Climate risks generally rise as warming increases. Limiting warming reduces the likelihood or severity of many impacts, but it cannot prevent all impacts or remove the need for adaptation."
+      }
+    ];
+
+    const teamColors = ["#d8f36a", "#ffad72", "#91c9ff", "#d4a7ff"];
+    const screens = {
+      start: document.getElementById("start-screen"),
+      game: document.getElementById("game-screen"),
+      final: document.getElementById("final-screen")
+    };
+    const setupForm = document.getElementById("setup-form");
+    const teamFields = document.getElementById("team-fields");
+    const scoreList = document.getElementById("score-list");
+    const answersContainer = document.getElementById("answers");
+    const feedback = document.getElementById("feedback");
+    const nextButton = document.getElementById("next-button");
+    let teamCount = 2;
+    let teams = [];
+    let questionIndex = 0;
+    let answered = false;
+
+    function renderTeamFields() {
+      teamFields.replaceChildren();
+      for (let i = 0; i < teamCount; i += 1) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "team-field";
+        const label = document.createElement("label");
+        label.htmlFor = `team-${i}`;
+        label.textContent = `Team ${i + 1}`;
+        const input = document.createElement("input");
+        input.id = `team-${i}`;
+        input.name = `team-${i}`;
+        input.maxLength = 24;
+        input.placeholder = `e.g. ${["The Trailblazers", "Planet Protectors", "Green Thinkers", "Future Makers"][i]}`;
+        input.autocomplete = "off";
+        wrapper.append(label, input);
+        teamFields.append(wrapper);
+      }
+    }
+
+    function showScreen(name) {
+      Object.entries(screens).forEach(([key, screen]) => {
+        screen.classList.toggle("active", key === name);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderScores() {
+      scoreList.replaceChildren();
+      teams.forEach((team, index) => {
+        const row = document.createElement("div");
+        row.className = `score-item${index === questionIndex % teams.length ? " current" : ""}`;
+        const name = document.createElement("span");
+        name.className = "score-name";
+        const dot = document.createElement("span");
+        dot.className = "team-dot";
+        dot.style.backgroundColor = teamColors[index];
+        dot.setAttribute("aria-hidden", "true");
+        const teamName = document.createElement("span");
+        teamName.textContent = team.name;
+        name.append(dot, teamName);
+        const score = document.createElement("span");
+        score.className = "score-value";
+        score.textContent = `${team.score} pts`;
+        row.append(name, score);
+        scoreList.append(row);
+      });
+    }
+
+    function renderQuestion() {
+      const question = questions[questionIndex];
+      const currentTeam = questionIndex % teams.length;
+      answered = false;
+      document.getElementById("category").textContent = question.category;
+      document.getElementById("turn-label").textContent = `${teams[currentTeam].name}'s turn`;
+      document.getElementById("turn-label").style.borderColor = teamColors[currentTeam];
+      document.getElementById("turn-label").style.color = teamColors[currentTeam];
+      document.getElementById("question-number").textContent = `Question ${String(questionIndex + 1).padStart(2, "0")}`;
+      document.getElementById("question-text").textContent = question.question;
+
+      answersContainer.replaceChildren();
+      question.answers.forEach((answer, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-button";
+        button.dataset.index = String(index);
+        button.setAttribute("aria-label", `${String.fromCharCode(65 + index)}: ${answer}`);
+        const key = document.createElement("span");
+        key.className = "answer-key";
+        key.textContent = String.fromCharCode(65 + index);
+        const text = document.createElement("span");
+        text.textContent = answer;
+        button.append(key, text);
+        button.addEventListener("click", () => chooseAnswer(index));
+        answersContainer.append(button);
+      });
+
+      feedback.classList.remove("visible");
+      nextButton.hidden = true;
+      nextButton.textContent = questionIndex === questions.length - 1 ? "See final scores →" : "Next question →";
+      document.getElementById("progress-label").textContent = `Question ${questionIndex + 1} of ${questions.length}`;
+      document.querySelector('[role="progressbar"]').setAttribute("aria-valuenow", String(questionIndex));
+      document.getElementById("progress-fill").style.width = `${(questionIndex / questions.length) * 100}%`;
+      renderScores();
+    }
+
+    function chooseAnswer(selectedIndex) {
+      if (answered) return;
+      answered = true;
+      const question = questions[questionIndex];
+      const isCorrect = selectedIndex === question.correct;
+      const currentTeam = questionIndex % teams.length;
+      if (isCorrect) teams[currentTeam].score += 100;
+
+      [...answersContainer.children].forEach((button, index) => {
+        button.disabled = true;
+        if (index === question.correct) button.classList.add("correct");
+        else if (index === selectedIndex) button.classList.add("incorrect");
+      });
+
+      const heading = document.getElementById("feedback-heading");
+      heading.textContent = isCorrect ? `Correct! ${teams[currentTeam].name} earns 100 points.` : "Not quite — here's the science.";
+      heading.className = `feedback-heading ${isCorrect ? "correct-text" : "incorrect-text"}`;
+      document.getElementById("feedback-copy").textContent = question.explanation;
+      feedback.classList.add("visible");
+      nextButton.hidden = false;
+      renderScores();
+    }
+
+    function showFinalScores() {
+      const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
+      const highestScore = sortedTeams[0].score;
+      const winners = sortedTeams.filter((team) => team.score === highestScore);
+      document.getElementById("final-heading").textContent = winners.length > 1
+        ? "A climate-smart tie!"
+        : `${winners[0].name} wins!`;
+      document.getElementById("final-copy").textContent = winners.length > 1
+        ? "Fantastic teamwork all around. Your class knows its climate science!"
+        : "Fantastic teamwork! Your class knows its climate science.";
+
+      const scores = document.getElementById("final-scores");
+      scores.replaceChildren();
+      sortedTeams.forEach((team, index) => {
+        const row = document.createElement("div");
+        row.className = `final-score-row${team.score === highestScore ? " winner" : ""}`;
+        const label = document.createElement("span");
+        label.textContent = `${team.score === highestScore ? "🏆 " : ""}${index + 1}. ${team.name}`;
+        const score = document.createElement("strong");
+        score.textContent = `${team.score} pts`;
+        row.append(label, score);
+        scores.append(row);
+      });
+      document.querySelector('[role="progressbar"]').setAttribute("aria-valuenow", String(questions.length));
+      document.getElementById("progress-fill").style.width = "100%";
+      showScreen("final");
+    }
+
+    document.querySelectorAll(".count-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        teamCount = Number(button.dataset.count);
+        document.querySelectorAll(".count-button").forEach((choice) => {
+          choice.setAttribute("aria-pressed", String(choice === button));
+        });
+        renderTeamFields();
+      });
+    });
+
+    setupForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      teams = Array.from({ length: teamCount }, (_, index) => ({
+        name: document.getElementById(`team-${index}`).value.trim() || `Team ${index + 1}`,
+        score: 0
+      }));
+      questionIndex = 0;
+      showScreen("game");
+      renderQuestion();
+    });
+
+    nextButton.addEventListener("click", () => {
+      questionIndex += 1;
+      if (questionIndex >= questions.length) showFinalScores();
+      else renderQuestion();
+    });
+
+    document.getElementById("play-again").addEventListener("click", () => {
+      showScreen("start");
+      document.getElementById("team-0").focus();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (!screens.game.classList.contains("active") || answered || event.altKey || event.ctrlKey || event.metaKey) return;
+      const keyIndex = Number(event.key) - 1;
+      if (keyIndex >= 0 && keyIndex < 4) chooseAnswer(keyIndex);
+    });
+
+    renderTeamFields();
+  </script>
+</body>
+</html>
